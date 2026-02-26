@@ -1,0 +1,358 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Marketplace API Inteligente",
+    "version": "1.0.0",
+    "description": "API con soporte para JWT, Gestión de Productos y Análisis de Reseñas con IA"
+  },
+  "host": "localhost:3000",
+  "basePath": "/",
+  "schemes": [
+    "http"
+  ],
+  "securityDefinitions": {
+    "bearerAuth": {
+      "type": "apiKey",
+      "in": "header",
+      "name": "Authorization",
+      "description": "Formato: Bearer <tu_token>"
+    }
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Verificar estado de la API",
+        "responses": {
+          "200": {
+            "description": "Servidor funcionando"
+          }
+        }
+      }
+    },
+    "/api/usuarios/register": {
+      "post": {
+        "summary": "Registrar nuevo usuario",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "full_name": {
+                  "type": "string",
+                  "example": "Juan Pérez"
+                },
+                "email": {
+                  "type": "string",
+                  "example": "juan@example.com"
+                },
+                "password": {
+                  "type": "string",
+                  "example": "password123"
+                },
+                "role": {
+                  "type": "string",
+                  "description": "Roles: admin, seller, buyer",
+                  "example": "buyer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Usuario registrado exitosamente"
+          },
+          "400": {
+            "description": "Datos inválidos o correo ya registrado"
+          }
+        }
+      }
+    },
+    "/api/usuarios/login": {
+      "post": {
+        "summary": "Iniciar sesión",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "example": "admin@example.com"
+                },
+                "password": {
+                  "type": "string",
+                  "example": "123456"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login exitoso, devuelve el token"
+          },
+          "401": {
+            "description": "Credenciales incorrectas"
+          }
+        }
+      }
+    },
+    "/api/categorias/": {
+      "get": {
+        "summary": "Listar todas las categorías",
+        "responses": {
+          "200": {
+            "description": "Lista de categorías"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear categoría con imagen",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "formData",
+            "type": "string",
+            "required": true,
+            "example": "Tecnología"
+          },
+          {
+            "name": "description",
+            "in": "formData",
+            "type": "string",
+            "example": "Dispositivos electrónicos y gadgets"
+          },
+          {
+            "name": "imagen_icono",
+            "in": "formData",
+            "type": "file",
+            "description": "Archivo de imagen para el icono"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Categoría creada correctamente"
+          }
+        }
+      }
+    },
+    "/api/categorias/{id}": {
+      "get": {
+        "summary": "Detalle de una categoría",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Datos de la categoría"
+          }
+        }
+      },
+      "put": {
+        "summary": "Actualizar categoría con imagen",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "name": "name",
+            "in": "formData",
+            "type": "string",
+            "example": "Tecnología Avanzada"
+          },
+          {
+            "name": "description",
+            "in": "formData",
+            "type": "string"
+          },
+          {
+            "name": "imagen_icono",
+            "in": "formData",
+            "type": "file"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Categoría actualizada"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar categoría",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Categoría eliminada"
+          }
+        }
+      }
+    },
+    "/api/categorias/{id}/productos": {
+      "get": {
+        "summary": "Listar productos por categoría",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de productos"
+          }
+        }
+      }
+    },
+    "/api/categorias/ia/generar": {
+      "post": {
+        "summary": "Generar descripción de categoría con IA",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "Ropa Deportiva"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Descripción generada"
+          }
+        }
+      }
+    },
+    "/api/categorias/{id}/estadisticas": {
+      "get": {
+        "summary": "Estadísticas de la categoría",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Métricas de productos"
+          }
+        }
+      }
+    },
+    "/api/productos/": {
+      "post": {
+        "summary": "Crear nuevo producto",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "example": "Nuevo Producto"
+                },
+                "description": {
+                  "type": "string",
+                  "example": "Descripción del producto"
+                },
+                "price": {
+                  "type": "number",
+                  "example": 10.99
+                },
+                "stock": {
+                  "type": "integer",
+                  "example": 50
+                },
+                "category_id": {
+                  "type": "integer",
+                  "description": "IDs válidos actuales: 4, 6, 7, 8",
+                  "example": 4
+                }
+              },
+              "required": [
+                "name",
+                "price",
+                "category_id"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Producto creado con éxito"
+          },
+          "500": {
+            "description": "Error: Asegúrate de usar category_id 4, 6, 7 u 8"
+          }
+        }
+      }
+    }
+  }
+}
