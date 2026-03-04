@@ -1,9 +1,54 @@
 import { pool } from '../config/database.js';
 
 export const CategoryModel = {
-    getAll: async () => {
-        const [rows] = await pool.query('SELECT * FROM categories');
-        return rows;
+    // 1. Método getAll actualizado con filtros y paginación
+    getAll: async (filters = {}) => {
+        const { 
+            name, 
+            startDate, 
+            endDate, 
+            sortBy = 'id', 
+            order = 'ASC', 
+            page = 1, 
+            limit = 10 
+        } = filters;
+
+        const offset = (page - 1) * limit;
+        let query = 'SELECT * FROM categories';
+        let countQuery = 'SELECT COUNT(*) as total FROM categories';
+        let params = [];
+        let conditions = [];
+
+        // Filtro por nombre (Búsqueda)
+        if (name) {
+            conditions.push("name LIKE ?");
+            params.push(`%${name}%`);
+        }
+
+        // Filtro por rango de fechas
+        if (startDate && endDate) {
+            conditions.push("created_at BETWEEN ? AND ?");
+            params.push(`${startDate} 00:00:00`, `${endDate} 23:59:59`);
+        }
+
+        // Construir el WHERE si hay condiciones
+        if (conditions.length > 0) {
+            const whereClause = ` WHERE ${conditions.join(" AND ")}`;
+            query += whereClause;
+            countQuery += whereClause;
+        }
+
+        // Ordenamiento y Paginación (Se usan valores ya saneados en el controlador)
+        query += ` ORDER BY ${sortBy} ${order} LIMIT ? OFFSET ?`;
+        
+        // Ejecutamos ambas consultas: una para los datos y otra para el total
+        const [rows] = await pool.query(query, [...params, parseInt(limit), offset]);
+        const [countResult] = await pool.query(countQuery, params);
+
+        return {
+            categories: rows,
+            totalItems: countResult[0].total
+        };
     },
 
     getById: async (id) => {

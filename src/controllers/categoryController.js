@@ -1,10 +1,50 @@
 import { CategoryModel } from '../models/categoryModel.js';
-import { generateProductDescription } from '../services/aiService.js';
+import { generateProductDescription } from '../../aiService.js';
 
 export const getCategories = async (req, res) => {
     try {
-        const categories = await CategoryModel.getAll();
-        res.json({ success: true, data: categories });
+        // 1. Extraer query params con valores por defecto
+        const { 
+            name, 
+            startDate, 
+            endDate, 
+            sortBy = 'id', 
+            order = 'ASC', 
+            page = 1, 
+            limit = 10 
+        } = req.query;
+
+        // 2. Validaciones de seguridad para el ordenamiento
+        const validSortFields = ['id', 'name', 'created_at'];
+        const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'id';
+        const finalOrder = order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+        
+        const currentPage = Math.max(1, parseInt(page) || 1);
+        const itemsPerPage = Math.max(1, parseInt(limit) || 10);
+
+        // 3. Llamar al modelo con el objeto de filtros
+        const { categories, totalItems } = await CategoryModel.getAll({
+            name,
+            startDate,
+            endDate,
+            sortBy: finalSortBy,
+            order: finalOrder,
+            page: currentPage,
+            limit: itemsPerPage
+        });
+
+        // 4. Respuesta con Metadatos (Paginación completa)
+        res.json({ 
+            success: true, 
+            data: categories,
+            meta: {
+                totalItems,
+                itemCount: categories.length,
+                itemsPerPage,
+                totalPages: Math.ceil(totalItems / itemsPerPage),
+                currentPage
+            }
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -67,7 +107,6 @@ export const createCategory = async (req, res) => {
             data: newCategory 
         });
     } catch (error) {
-        console.error("Error al crear categoría:", error.message);
         res.status(500).json({ success: false, message: error.message });
     }
 };

@@ -1,5 +1,5 @@
 import { ProductModel } from '../models/productModel.js';
-import { generateProductDescription } from '../services/aiService.js';
+import { generateProductDescription } from '../../aiService.js';
 
 /**
  * @desc Obtener lista de productos con soporte para filtros y búsqueda

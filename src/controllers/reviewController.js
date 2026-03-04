@@ -1,5 +1,5 @@
 import { pool } from '../config/database.js';
-import { analyzeReviews } from '../services/aiService.js';
+import { analyzeReviews } from '../../aiService.js';
 
 export const addReview = async (req, res) => {
     try {
