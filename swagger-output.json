@@ -15,21 +15,23 @@
       "type": "apiKey",
       "in": "header",
       "name": "Authorization",
-      "description": "Formato: Bearer <tu_token>"
+      "description": "Escribe el token en este formato: Bearer <tu_token>"
     }
   },
   "paths": {
     "/": {
       "get": {
-        "summary": "Verificar estado de la API",
+        "description": "",
         "responses": {
-          "200": { "description": "Servidor funcionando" }
+          "200": {
+            "description": "OK"
+          }
         }
       }
     },
     "/api/usuarios/register": {
       "post": {
-        "summary": "Registrar nuevo usuario",
+        "description": "",
         "parameters": [
           {
             "name": "body",
@@ -37,27 +39,24 @@
             "schema": {
               "type": "object",
               "properties": {
-                "full_name": { "type": "string", "example": "Juan Pérez" },
-                "email": { "type": "string", "example": "juan@example.com" },
-                "password": { "type": "string", "example": "password123" },
-                "role": {
-                  "type": "string",
-                  "description": "Roles: admin, seller, buyer",
-                  "example": "buyer"
-                }
+                "full_name": { "example": "Juan Pérez" },
+                "email": { "example": "juan@example.com" },
+                "password": { "example": "123456" },
+                "role": { "example": "buyer" }
               }
             }
           }
         ],
         "responses": {
-          "201": { "description": "Usuario registrado exitosamente" },
-          "400": { "description": "Datos inválidos o correo ya registrado" }
+          "201": { "description": "Created" },
+          "400": { "description": "Bad Request" },
+          "500": { "description": "Internal Server Error" }
         }
       }
     },
     "/api/usuarios/login": {
       "post": {
-        "summary": "Iniciar sesión",
+        "description": "",
         "parameters": [
           {
             "name": "body",
@@ -65,103 +64,99 @@
             "schema": {
               "type": "object",
               "properties": {
-                "email": { "type": "string", "example": "admin@example.com" },
-                "password": { "type": "string", "example": "123456" }
+                "email": { "example": "admin@example.com" },
+                "password": { "example": "123456" }
               }
             }
           }
         ],
         "responses": {
-          "200": { "description": "Login exitoso, devuelve el token" },
-          "401": { "description": "Credenciales incorrectas" }
+          "200": { "description": "OK" },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Internal Server Error" }
         }
       }
     },
     "/api/categorias/": {
       "get": {
-        "summary": "Listar categorías con filtros, búsqueda y paginación",
-        "description": "Obtiene la lista de categorías permitiendo filtrar por nombre, fechas de creación, ordenamiento múltiple y paginación con metadatos.",
+        "summary": "Listar categorías con filtros avanzados",
+        "description": "Permite búsqueda por nombre, filtrado por fechas, ordenamiento múltiple y paginación completa.",
         "parameters": [
-          { "name": "name", "in": "query", "type": "string", "description": "Búsqueda por nombre de categoría (LIKE)", "example": "Tec" },
-          { "name": "startDate", "in": "query", "type": "string", "format": "date", "description": "Filtrar por fecha de creación (Desde: YYYY-MM-DD)", "example": "2024-01-01" },
-          { "name": "endDate", "in": "query", "type": "string", "format": "date", "description": "Filtrar por fecha de creación (Hasta: YYYY-MM-DD)", "example": "2024-12-31" },
-          { "name": "sortBy", "in": "query", "type": "string", "description": "Campo de ordenamiento (name, created_at, id)", "example": "created_at" },
-          { "name": "order", "in": "query", "type": "string", "enum": ["ASC", "DESC"], "default": "DESC", "description": "Dirección del ordenamiento" },
+          { "name": "name", "in": "query", "type": "string", "description": "Búsqueda por nombre (LIKE)", "example": "Electro" },
+          { "name": "startDate", "in": "query", "type": "string", "format": "date", "description": "Fecha inicio (YYYY-MM-DD)", "example": "2024-01-01" },
+          { "name": "endDate", "in": "query", "type": "string", "format": "date", "description": "Fecha fin (YYYY-MM-DD)", "example": "2024-12-31" },
+          { "name": "sortBy", "in": "query", "type": "string", "description": "Campo de orden (name, created_at)", "example": "created_at" },
+          { "name": "order", "in": "query", "type": "string", "enum": ["ASC", "DESC"], "default": "DESC" },
           { "name": "page", "in": "query", "type": "integer", "default": 1, "description": "Número de página" },
-          { "name": "limit", "in": "query", "type": "integer", "default": 10, "description": "Cantidad de registros por página" }
+          { "name": "limit", "in": "query", "type": "integer", "default": 10, "description": "Registros por página" }
         ],
         "responses": {
           "200": {
-            "description": "Lista paginada de categorías",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "success": { "type": "boolean", "example": true },
-                "data": { "type": "array", "items": { "type": "object" } },
-                "meta": {
-                  "type": "object",
-                  "properties": {
-                    "totalItems": { "type": "integer" },
-                    "itemCount": { "type": "integer" },
-                    "itemsPerPage": { "type": "integer" },
-                    "totalPages": { "type": "integer" },
-                    "currentPage": { "type": "integer" }
-                  }
-                }
-              }
-            }
-          }
+            "description": "OK - Devuelve lista y metadatos (totalItems, totalPages, etc.)"
+          },
+          "500": { "description": "Internal Server Error" }
         }
       },
       "post": {
-        "summary": "Crear categoría con imagen",
-        "consumes": ["multipart/form-data"],
         "security": [{ "bearerAuth": [] }],
+        "description": "",
         "parameters": [
-          { "name": "name", "in": "formData", "type": "string", "required": true, "example": "Tecnología" },
-          { "name": "description", "in": "formData", "type": "string", "example": "Gadgets y más" },
-          { "name": "imagen_icono", "in": "formData", "type": "file", "description": "Archivo de imagen" }
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": { "example": "Tecnología" },
+                "description": { "example": "Equipos electrónicos" }
+              }
+            }
+          }
         ],
         "responses": {
-          "201": { "description": "Categoría creada correctamente" }
+          "201": { "description": "Created" },
+          "401": { "description": "Unauthorized" },
+          "500": { "description": "Internal Server Error" }
         }
       }
     },
     "/api/categorias/{id}": {
       "get": {
-        "summary": "Detalle de una categoría",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "integer" }],
-        "responses": { "200": { "description": "Datos de la categoría" } }
+        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "string" }],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Not Found" } }
       },
       "put": {
-        "summary": "Actualizar categoría con imagen",
-        "consumes": ["multipart/form-data"],
         "security": [{ "bearerAuth": [] }],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "type": "integer" },
-          { "name": "name", "in": "formData", "type": "string" },
-          { "name": "description", "in": "formData", "type": "string" },
-          { "name": "imagen_icono", "in": "formData", "type": "file" }
+          { "name": "id", "in": "path", "required": true, "type": "string" },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": { "example": "Nuevo Nombre" },
+                "description": { "example": "Nueva descripción" }
+              }
+            }
+          }
         ],
-        "responses": { "200": { "description": "Categoría actualizada" } }
+        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
       },
       "delete": {
-        "summary": "Eliminar categoría",
         "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "integer" }],
-        "responses": { "200": { "description": "Categoría eliminada" } }
+        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "string" }],
+        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
       }
     },
     "/api/categorias/{id}/productos": {
       "get": {
-        "summary": "Listar productos por categoría",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "integer" }],
-        "responses": { "200": { "description": "Lista de productos" } }
+        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "string" }],
+        "responses": { "200": { "description": "OK" } }
       }
     },
     "/api/categorias/ia/generar": {
       "post": {
-        "summary": "Generar descripción de categoría con IA",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
@@ -169,24 +164,31 @@
             "in": "body",
             "schema": {
               "type": "object",
-              "properties": { "name": { "type": "string", "example": "Ropa Deportiva" } }
+              "properties": { "name": { "example": "Calzado" } }
             }
           }
         ],
-        "responses": { "200": { "description": "Descripción generada" } }
+        "responses": { "200": { "description": "OK" } }
       }
     },
     "/api/categorias/{id}/estadisticas": {
       "get": {
-        "summary": "Estadísticas de la categoría",
         "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "integer" }],
-        "responses": { "200": { "description": "Métricas de productos" } }
+        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "string" }],
+        "responses": { "200": { "description": "OK" } }
       }
     },
     "/api/productos/": {
+      "get": {
+        "parameters": [
+          { "name": "name", "in": "query", "type": "string" },
+          { "name": "category_id", "in": "query", "type": "string" },
+          { "name": "minPrice", "in": "query", "type": "string" },
+          { "name": "maxPrice", "in": "query", "type": "string" }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      },
       "post": {
-        "summary": "Crear nuevo producto",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
@@ -195,20 +197,89 @@
             "schema": {
               "type": "object",
               "properties": {
-                "name": { "type": "string", "example": "Nuevo Producto" },
-                "description": { "type": "string", "example": "Descripción del producto" },
-                "price": { "type": "number", "example": 10.99 },
-                "stock": { "type": "integer", "example": 50 },
-                "category_id": { "type": "integer", "description": "IDs válidos: 4, 6, 7, 8", "example": 4 }
-              },
-              "required": ["name", "price", "category_id"]
+                "name": { "example": "Laptop" },
+                "description": { "example": "Core i7" },
+                "price": { "example": 1200 },
+                "stock": { "example": 10 },
+                "category_id": { "example": 1 }
+              }
             }
           }
         ],
-        "responses": {
-          "201": { "description": "Producto creado con éxito" },
-          "500": { "description": "Error: Asegúrate de usar category_id válido" }
-        }
+        "responses": { "201": { "description": "Created" } }
+      }
+    },
+    "/api/ordenes/my-orders": {
+      "get": {
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
+      }
+    },
+    "/api/ordenes/status/{id}": {
+      "get": {
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "string" }],
+        "responses": { "200": { "description": "OK" } }
+      },
+      "put": {
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "type": "string" },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": { "status": { "example": "completado" } }
+            }
+          }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/api/ordenes/": {
+      "post": {
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "items": { "example": [{"product_id": 1, "quantity": 2}] },
+                "shipping_address": { "example": "Calle Falsa 123" }
+              }
+            }
+          }
+        ],
+        "responses": { "201": { "description": "Created" } }
+      }
+    },
+    "/api/resenas/": {
+      "post": {
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "product_id": { "example": 1 },
+                "rating": { "example": 5 },
+                "comment": { "example": "Excelente" }
+              }
+            }
+          }
+        ],
+        "responses": { "201": { "description": "Created" } }
+      }
+    },
+    "/api/resenas/analysis/{productId}": {
+      "get": {
+        "parameters": [{ "name": "productId", "in": "path", "required": true, "type": "string" }],
+        "responses": { "200": { "description": "OK" } }
       }
     }
   }
