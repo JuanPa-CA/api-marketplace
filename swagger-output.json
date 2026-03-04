@@ -41,7 +41,7 @@
               "properties": {
                 "full_name": { "example": "Juan Pérez" },
                 "email": { "example": "juan@example.com" },
-                "password": { "example": "123456" },
+                "password": {"type": "string", "example": "123456" },
                 "role": { "example": "buyer" }
               }
             }
@@ -65,7 +65,7 @@
               "type": "object",
               "properties": {
                 "email": { "example": "admin@example.com" },
-                "password": { "example": "123456" }
+                "password": {"type":"string", "example": "123456" }
               }
             }
           }
@@ -230,7 +230,7 @@
             "in": "body",
             "schema": {
               "type": "object",
-              "properties": { "status": { "example": "completado" } }
+              "properties": { "status": { "example": "shipped" } }
             }
           }
         ],
