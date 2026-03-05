@@ -201,7 +201,7 @@
                 "description": { "example": "Core i7" },
                 "price": { "example": 1200 },
                 "stock": { "example": 10 },
-                "category_id": { "example": 1 }
+                "category_id": { "example": 9 }
               }
             }
           }
