@@ -3,7 +3,7 @@ import { generateProductDescription } from '../../aiService.js';
 
 export const getCategories = async (req, res) => {
     try {
-        // 1. Extraer query params con valores por defecto
+
         const { 
             name, 
             startDate, 
@@ -14,7 +14,6 @@ export const getCategories = async (req, res) => {
             limit = 10 
         } = req.query;
 
-        // 2. Validaciones de seguridad para el ordenamiento
         const validSortFields = ['id', 'name', 'created_at'];
         const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'id';
         const finalOrder = order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
@@ -22,7 +21,6 @@ export const getCategories = async (req, res) => {
         const currentPage = Math.max(1, parseInt(page) || 1);
         const itemsPerPage = Math.max(1, parseInt(limit) || 10);
 
-        // 3. Llamar al modelo con el objeto de filtros
         const { categories, totalItems } = await CategoryModel.getAll({
             name,
             startDate,
@@ -33,7 +31,6 @@ export const getCategories = async (req, res) => {
             limit: itemsPerPage
         });
 
-        // 4. Respuesta con Metadatos (Paginación completa)
         res.json({ 
             success: true, 
             data: categories,
