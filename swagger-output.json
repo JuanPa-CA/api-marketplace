@@ -99,24 +99,47 @@
       },
       "post": {
         "security": [{ "bearerAuth": [] }],
-        "description": "",
+        "summary": "Crear nueva categoría con imagen",
+        "description": "Crea una categoría enviando los datos como multipart/form-data para permitir la subida de archivos.",
+        "consumes": [
+          "multipart/form-data"
+        ],
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "name": { "example": "Tecnología" },
-                "description": { "example": "Equipos electrónicos" }
-              }
-            }
+            "name": "name",
+            "in": "formData",
+            "description": "Nombre de la categoría",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "in": "formData",
+            "description": "Descripción breve de la categoría",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "imagen_icono",
+            "in": "formData",
+            "description": "Archivo de imagen de la categoría (jpg, png)",
+            "required": false,
+            "type": "file"
           }
         ],
         "responses": {
-          "201": { "description": "Created" },
-          "401": { "description": "Unauthorized" },
-          "500": { "description": "Internal Server Error" }
+          "201": { 
+            "description": "Created - Categoría creada exitosamente" 
+          },
+          "400": { 
+            "description": "Bad Request - Datos inválidos o formato de archivo no soportado" 
+          },
+          "401": { 
+            "description": "Unauthorized - Token JWT faltante o inválido" 
+          },
+          "500": { 
+            "description": "Internal Server Error" 
+          }
         }
       }
     },
