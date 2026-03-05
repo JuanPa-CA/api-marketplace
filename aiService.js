@@ -1,5 +1,4 @@
-// gemini.js  (o el nombre que prefieras en la raíz o en una carpeta utils/lib)
-import { GoogleGenAI } from "@google/genai"; // ← nuevo SDK oficial
+import { GoogleGenAI } from "@google/genai"; 
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -12,10 +11,6 @@ if (!apiKey) {
 
 const genAI = new GoogleGenAI({ apiKey });
 
-// Modelos recomendados en marzo 2026 (elige uno según tus necesidades)
-// Más estable y barato → gemini-2.5-flash
-// Más ligero y rápido → gemini-2.5-flash-lite
-// Preview experimental (muy bueno en razonamiento) → gemini-3.1-flash-lite-preview
 const DEFAULT_MODEL = "gemini-2.5-flash";
 
 const generateProductDescription = async (name, context = "Producto") => {
@@ -23,8 +18,6 @@ const generateProductDescription = async (name, context = "Producto") => {
     const model = genAI.getModel(DEFAULT_MODEL);
 
     const prompt = `Actúa como copywriter experto. Crea una descripción corta y atractiva para un ${context} llamado "${name}". Solo texto plano, sin negritas ni símbolos. Máximo 2-3 líneas.`;
-
-    // En el nuevo SDK la llamada es más limpia
     const result = await model.generateContent(prompt);
     const text = result.text.trim();
 
