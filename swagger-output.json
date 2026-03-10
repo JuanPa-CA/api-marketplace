@@ -7,9 +7,7 @@
   },
   "host": "localhost:3000",
   "basePath": "/",
-  "schemes": [
-    "http"
-  ],
+  "schemes": ["http"],
   "securityDefinitions": {
     "bearerAuth": {
       "type": "apiKey",
@@ -21,288 +19,439 @@
   "paths": {
     "/": {
       "get": {
-        "description": "",
+        "summary": "Health check",
+        "description": "Verifica que el servidor esté corriendo",
         "responses": {
-          "200": {
-            "description": "OK"
-          }
+          "200": { "description": "API funcionando correctamente" }
         }
       }
     },
+
     "/api/usuarios/register": {
       "post": {
-        "description": "",
+        "tags": ["Usuarios"],
+        "summary": "Registrar nuevo usuario",
+        "description": "Crea una cuenta de buyer, seller o admin. Rate limit: 5 registros/hora por IP.",
         "parameters": [
           {
             "name": "body",
             "in": "body",
+            "required": true,
             "schema": {
               "type": "object",
+              "required": ["full_name", "email", "password"],
               "properties": {
-                "full_name": { "example": "Juan Pérez" },
-                "email": { "example": "juan@example.com" },
-                "password": {"type": "string", "example": "123456" },
-                "role": { "example": "buyer" }
+                "full_name": { "type": "string", "example": "Juan Pérez" },
+                "email": { "type": "string", "example": "juan@example.com" },
+                "password": { "type": "string", "example": "123456" },
+                "role": { "type": "string", "enum": ["buyer", "seller", "admin"], "example": "buyer" }
               }
             }
           }
         ],
         "responses": {
-          "201": { "description": "Created" },
-          "400": { "description": "Bad Request" },
-          "500": { "description": "Internal Server Error" }
+          "201": { "description": "Usuario registrado exitosamente" },
+          "400": { "description": "Email ya existe o datos inválidos" },
+          "429": { "description": "Demasiados registros desde esta IP" },
+          "500": { "description": "Error interno del servidor" }
         }
       }
     },
+
     "/api/usuarios/login": {
       "post": {
-        "description": "",
+        "tags": ["Usuarios"],
+        "summary": "Iniciar sesión",
+        "description": "Autentica al usuario y devuelve un token JWT. Rate limit: 10 intentos/15min por IP.",
         "parameters": [
           {
             "name": "body",
             "in": "body",
+            "required": true,
             "schema": {
               "type": "object",
+              "required": ["email", "password"],
               "properties": {
-                "email": { "example": "admin@example.com" },
-                "password": {"type":"string", "example": "123456" }
+                "email": { "type": "string", "example": "admin@example.com" },
+                "password": { "type": "string", "example": "123456" }
               }
             }
           }
         ],
         "responses": {
-          "200": { "description": "OK" },
-          "401": { "description": "Unauthorized" },
-          "500": { "description": "Internal Server Error" }
+          "200": { "description": "Login exitoso, devuelve token JWT y datos del usuario" },
+          "401": { "description": "Contraseña incorrecta" },
+          "404": { "description": "Usuario no encontrado" },
+          "429": { "description": "Demasiados intentos de login" },
+          "500": { "description": "Error interno del servidor" }
         }
       }
     },
+
     "/api/categorias/": {
       "get": {
+        "tags": ["Categorías"],
         "summary": "Listar categorías con filtros avanzados",
         "description": "Permite búsqueda por nombre, filtrado por fechas, ordenamiento múltiple y paginación completa.",
         "parameters": [
           { "name": "name", "in": "query", "type": "string", "description": "Búsqueda por nombre (LIKE)", "example": "Electro" },
           { "name": "startDate", "in": "query", "type": "string", "format": "date", "description": "Fecha inicio (YYYY-MM-DD)", "example": "2024-01-01" },
           { "name": "endDate", "in": "query", "type": "string", "format": "date", "description": "Fecha fin (YYYY-MM-DD)", "example": "2024-12-31" },
-          { "name": "sortBy", "in": "query", "type": "string", "description": "Campo de orden (name, created_at)", "example": "created_at" },
-          { "name": "order", "in": "query", "type": "string", "enum": ["ASC", "DESC"], "default": "DESC" },
-          { "name": "page", "in": "query", "type": "integer", "default": 1, "description": "Número de página" },
-          { "name": "limit", "in": "query", "type": "integer", "default": 10, "description": "Registros por página" }
+          { "name": "sortBy", "in": "query", "type": "string", "enum": ["id", "name", "created_at"], "default": "id" },
+          { "name": "order", "in": "query", "type": "string", "enum": ["ASC", "DESC"], "default": "ASC" },
+          { "name": "page", "in": "query", "type": "integer", "default": 1 },
+          { "name": "limit", "in": "query", "type": "integer", "default": 10 }
         ],
         "responses": {
-          "200": {
-            "description": "OK - Devuelve lista y metadatos (totalItems, totalPages, etc.)"
-          },
-          "500": { "description": "Internal Server Error" }
+          "200": { "description": "Lista de categorías con metadatos de paginación" },
+          "500": { "description": "Error interno del servidor" }
         }
       },
       "post": {
+        "tags": ["Categorías"],
+        "summary": "Crear nueva categoría (Admin)",
+        "description": "Enviar como multipart/form-data para poder subir imagen.",
         "security": [{ "bearerAuth": [] }],
-        "summary": "Crear nueva categoría con imagen",
-        "description": "Crea una categoría enviando los datos como multipart/form-data para permitir la subida de archivos.",
-        "consumes": [
-          "multipart/form-data"
-        ],
+        "consumes": ["multipart/form-data"],
         "parameters": [
-          {
-            "name": "name",
-            "in": "formData",
-            "description": "Nombre de la categoría",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "description",
-            "in": "formData",
-            "description": "Descripción breve de la categoría",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "imagen_icono",
-            "in": "formData",
-            "description": "Archivo de imagen de la categoría (jpg, png)",
-            "required": false,
-            "type": "file"
-          }
+          { "name": "name", "in": "formData", "required": true, "type": "string", "description": "Nombre de la categoría" },
+          { "name": "description", "in": "formData", "required": false, "type": "string", "description": "Descripción breve" },
+          { "name": "imagen_icono", "in": "formData", "required": false, "type": "file", "description": "Imagen del ícono (JPG, PNG, WEBP - máx 5MB)" }
         ],
         "responses": {
-          "201": { 
-            "description": "Created - Categoría creada exitosamente" 
-          },
-          "400": { 
-            "description": "Bad Request - Datos inválidos o formato de archivo no soportado" 
-          },
-          "401": { 
-            "description": "Unauthorized - Token JWT faltante o inválido" 
-          },
-          "500": { 
-            "description": "Internal Server Error" 
-          }
+          "201": { "description": "Categoría creada exitosamente" },
+          "400": { "description": "Nombre faltante o formato de imagen inválido" },
+          "401": { "description": "Token JWT faltante o inválido" },
+          "403": { "description": "Acceso denegado — se requiere rol admin" },
+          "500": { "description": "Error interno del servidor" }
         }
       }
     },
+
     "/api/categorias/{id}": {
       "get": {
-        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "string" }],
-        "responses": { "200": { "description": "OK" }, "404": { "description": "Not Found" } }
+        "tags": ["Categorías"],
+        "summary": "Obtener categoría por ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "integer", "example": 1 }],
+        "responses": {
+          "200": { "description": "Datos de la categoría" },
+          "404": { "description": "Categoría no encontrada" }
+        }
       },
       "put": {
+        "tags": ["Categorías"],
+        "summary": "Actualizar categoría (Admin)",
+        "description": "Enviar como multipart/form-data. Si se sube nueva imagen, la anterior se elimina del servidor.",
         "security": [{ "bearerAuth": [] }],
+        "consumes": ["multipart/form-data"],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "type": "string" },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "name": { "example": "Nuevo Nombre" },
-                "description": { "example": "Nueva descripción" }
-              }
-            }
-          }
+          { "name": "id", "in": "path", "required": true, "type": "integer", "example": 1 },
+          { "name": "name", "in": "formData", "required": false, "type": "string" },
+          { "name": "description", "in": "formData", "required": false, "type": "string" },
+          { "name": "imagen_icono", "in": "formData", "required": false, "type": "file", "description": "Nueva imagen (reemplaza la anterior)" }
         ],
-        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
+        "responses": {
+          "200": { "description": "Categoría actualizada correctamente" },
+          "400": { "description": "Sin cambios o datos inválidos" },
+          "401": { "description": "Token inválido" },
+          "403": { "description": "Acceso denegado — se requiere rol admin" },
+          "404": { "description": "Categoría no encontrada" }
+        }
       },
       "delete": {
+        "tags": ["Categorías"],
+        "summary": "Eliminar categoría (Admin)",
+        "description": "Elimina la categoría y su imagen del servidor automáticamente.",
         "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "string" }],
-        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
+        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "integer", "example": 1 }],
+        "responses": {
+          "200": { "description": "Categoría eliminada correctamente" },
+          "401": { "description": "Token inválido" },
+          "403": { "description": "Acceso denegado — se requiere rol admin" },
+          "404": { "description": "Categoría no encontrada" }
+        }
       }
     },
+
     "/api/categorias/{id}/productos": {
       "get": {
-        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "string" }],
-        "responses": { "200": { "description": "OK" } }
+        "tags": ["Categorías"],
+        "summary": "Obtener productos de una categoría",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "integer", "example": 9 }],
+        "responses": {
+          "200": { "description": "Lista de productos de la categoría" }
+        }
       }
     },
+
     "/api/categorias/ia/generar": {
       "post": {
+        "tags": ["Categorías"],
+        "summary": "Generar descripción de categoría con IA (Admin)",
+        "description": "Usa Gemini AI para generar una descripción atractiva basada en el nombre.",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
             "name": "body",
             "in": "body",
+            "required": true,
             "schema": {
               "type": "object",
-              "properties": { "name": { "example": "Calzado" } }
+              "required": ["name"],
+              "properties": {
+                "name": { "type": "string", "example": "Calzado Deportivo" }
+              }
             }
           }
         ],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": { "description": "Descripción generada por IA" },
+          "400": { "description": "Nombre faltante" },
+          "401": { "description": "Token inválido" },
+          "403": { "description": "Acceso denegado — se requiere rol admin" }
+        }
       }
     },
+
     "/api/categorias/{id}/estadisticas": {
       "get": {
+        "tags": ["Categorías"],
+        "summary": "Estadísticas de productos de una categoría (Admin)",
+        "description": "Devuelve total de productos, precio promedio y stock total.",
         "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "string" }],
-        "responses": { "200": { "description": "OK" } }
+        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "integer", "example": 9 }],
+        "responses": {
+          "200": { "description": "Estadísticas: total_productos, precio_promedio, stock_total" },
+          "401": { "description": "Token inválido" },
+          "403": { "description": "Acceso denegado — se requiere rol admin" }
+        }
       }
     },
+
     "/api/productos/": {
       "get": {
+        "tags": ["Productos"],
+        "summary": "Listar todos los productos",
+        "description": "Devuelve productos con filtros opcionales por nombre, categoría y rango de precios.",
         "parameters": [
-          { "name": "name", "in": "query", "type": "string" },
-          { "name": "category_id", "in": "query", "type": "string" },
-          { "name": "minPrice", "in": "query", "type": "string" },
-          { "name": "maxPrice", "in": "query", "type": "string" }
+          { "name": "name", "in": "query", "type": "string", "description": "Buscar por nombre (LIKE)", "example": "Laptop" },
+          { "name": "category_id", "in": "query", "type": "integer", "description": "Filtrar por categoría", "example": 9 },
+          { "name": "minPrice", "in": "query", "type": "number", "description": "Precio mínimo", "example": 100 },
+          { "name": "maxPrice", "in": "query", "type": "number", "description": "Precio máximo", "example": 1500 }
         ],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": { "description": "Lista de productos con count total" },
+          "500": { "description": "Error interno del servidor" }
+        }
       },
       "post": {
+        "tags": ["Productos"],
+        "summary": "Crear producto con imagen e IA (Privado)",
+        "description": "Crea un producto. Si no envías descripción, Gemini AI la genera automáticamente. Enviar como multipart/form-data.",
         "security": [{ "bearerAuth": [] }],
+        "consumes": ["multipart/form-data"],
         "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "name": { "example": "Laptop" },
-                "description": { "example": "Core i7" },
-                "price": { "example": 1200 },
-                "stock": { "example": 10 },
-                "category_id": { "example": 9 }
-              }
-            }
-          }
+          { "name": "name", "in": "formData", "required": true, "type": "string", "example": "Laptop Gamer" },
+          { "name": "price", "in": "formData", "required": true, "type": "number", "example": 1200 },
+          { "name": "stock", "in": "formData", "required": false, "type": "integer", "example": 10 },
+          { "name": "category_id", "in": "formData", "required": false, "type": "integer", "example": 9 },
+          { "name": "description", "in": "formData", "required": false, "type": "string", "description": "Si se omite, la IA genera una descripción automática" },
+          { "name": "image", "in": "formData", "required": false, "type": "file", "description": "Imagen del producto (JPG, PNG, WEBP - máx 5MB)" }
         ],
-        "responses": { "201": { "description": "Created" } }
+        "responses": {
+          "201": { "description": "Producto creado exitosamente" },
+          "400": { "description": "Nombre o precio faltante / inválido" },
+          "401": { "description": "Token JWT faltante o inválido" },
+          "500": { "description": "Error interno del servidor" }
+        }
       }
     },
-    "/api/ordenes/my-orders": {
+
+    "/api/productos/{id}": {
       "get": {
-        "security": [{ "bearerAuth": [] }],
-        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
-      }
-    },
-    "/api/ordenes/status/{id}": {
-      "get": {
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "string" }],
-        "responses": { "200": { "description": "OK" } }
+        "tags": ["Productos"],
+        "summary": "Obtener producto por ID",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "integer", "example": 1 }],
+        "responses": {
+          "200": { "description": "Datos completos del producto (incluye nombre de categoría y vendedor)" },
+          "404": { "description": "Producto no encontrado" }
+        }
       },
       "put": {
+        "tags": ["Productos"],
+        "summary": "Actualizar producto (Privado)",
+        "description": "Actualiza los campos enviados. Los campos no enviados conservan su valor anterior. Enviar como multipart/form-data.",
         "security": [{ "bearerAuth": [] }],
+        "consumes": ["multipart/form-data"],
         "parameters": [
-          { "name": "id", "in": "path", "required": true, "type": "string" },
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": { "status": { "example": "shipped" } }
-            }
-          }
+          { "name": "id", "in": "path", "required": true, "type": "integer", "example": 1 },
+          { "name": "name", "in": "formData", "required": false, "type": "string", "example": "Laptop Pro" },
+          { "name": "description", "in": "formData", "required": false, "type": "string" },
+          { "name": "price", "in": "formData", "required": false, "type": "number", "example": 1350 },
+          { "name": "stock", "in": "formData", "required": false, "type": "integer", "example": 5 },
+          { "name": "category_id", "in": "formData", "required": false, "type": "integer", "example": 9 },
+          { "name": "image", "in": "formData", "required": false, "type": "file", "description": "Nueva imagen (opcional)" }
         ],
-        "responses": { "200": { "description": "OK" } }
+        "responses": {
+          "200": { "description": "Producto actualizado correctamente" },
+          "400": { "description": "Precio o stock con formato inválido" },
+          "401": { "description": "Token JWT faltante o inválido" },
+          "404": { "description": "Producto no encontrado" }
+        }
+      },
+      "delete": {
+        "tags": ["Productos"],
+        "summary": "Eliminar producto (Privado)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "integer", "example": 1 }],
+        "responses": {
+          "200": { "description": "Producto eliminado correctamente" },
+          "401": { "description": "Token JWT faltante o inválido" },
+          "404": { "description": "Producto no encontrado" }
+        }
       }
     },
-    "/api/ordenes/": {
-      "post": {
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "body",
-            "in": "body",
-            "schema": {
-              "type": "object",
-              "properties": {
-                "items": { "example": [{"product_id": 1, "quantity": 2}] },
-                "shipping_address": { "example": "Calle Falsa 123" }
-              }
-            }
-          }
-        ],
-        "responses": { "201": { "description": "Created" } }
-      }
-    },
+
     "/api/resenas/": {
       "post": {
+        "tags": ["Reseñas"],
+        "summary": "Agregar reseña a un producto (Privado)",
+        "description": "El usuario autenticado agrega una reseña con calificación y comentario.",
         "security": [{ "bearerAuth": [] }],
         "parameters": [
           {
             "name": "body",
             "in": "body",
+            "required": true,
             "schema": {
               "type": "object",
+              "required": ["product_id", "rating"],
               "properties": {
-                "product_id": { "example": 1 },
-                "rating": { "example": 5 },
-                "comment": { "example": "Excelente" }
+                "product_id": { "type": "integer", "example": 1 },
+                "rating": { "type": "integer", "minimum": 1, "maximum": 5, "example": 5, "description": "Calificación del 1 al 5" },
+                "comment": { "type": "string", "example": "Excelente producto, muy recomendado." }
               }
             }
           }
         ],
-        "responses": { "201": { "description": "Created" } }
+        "responses": {
+          "201": { "description": "Reseña agregada exitosamente" },
+          "401": { "description": "Token JWT faltante o inválido" },
+          "500": { "description": "Error interno del servidor" }
+        }
       }
     },
+
     "/api/resenas/analysis/{productId}": {
       "get": {
-        "parameters": [{ "name": "productId", "in": "path", "required": true, "type": "string" }],
-        "responses": { "200": { "description": "OK" } }
+        "tags": ["Reseñas"],
+        "summary": "Análisis de sentimiento de reseñas con IA",
+        "description": "Usa Gemini AI para analizar todas las reseñas de un producto y devolver un resumen del sentimiento general en una frase.",
+        "parameters": [
+          { "name": "productId", "in": "path", "required": true, "type": "integer", "example": 3, "description": "ID del producto a analizar" }
+        ],
+        "responses": {
+          "200": { "description": "Análisis de sentimiento generado por IA" },
+          "404": { "description": "Producto no encontrado" },
+          "500": { "description": "Error interno del servidor" }
+        }
+      }
+    },
+
+    "/api/ordenes/my-orders": {
+      "get": {
+        "tags": ["Órdenes"],
+        "summary": "Mis órdenes (Privado)",
+        "description": "Devuelve todas las órdenes del usuario autenticado, agrupadas con sus productos.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Lista de órdenes con detalle de productos" },
+          "401": { "description": "Token inválido" }
+        }
+      }
+    },
+
+    "/api/ordenes/status/{id}": {
+      "get": {
+        "tags": ["Órdenes"],
+        "summary": "Obtener estado de una orden (Privado)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "type": "integer", "example": 12 }],
+        "responses": {
+          "200": { "description": "Estado actual de la orden" },
+          "401": { "description": "Token inválido" },
+          "404": { "description": "Orden no encontrada o no pertenece al usuario" }
+        }
+      },
+      "put": {
+        "tags": ["Órdenes"],
+        "summary": "Actualizar estado de una orden (Privado)",
+        "description": "Permite cambiar el estado de la orden. Estados válidos: pending, shipped, delivered, cancelled.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "type": "integer", "example": 12 },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["status"],
+              "properties": {
+                "status": { "type": "string", "enum": ["pending", "shipped", "delivered", "cancelled"], "example": "shipped" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Estado actualizado exitosamente" },
+          "400": { "description": "Estado no válido" },
+          "401": { "description": "Token inválido" },
+          "404": { "description": "Orden no encontrada" }
+        }
+      }
+    },
+
+    "/api/ordenes/": {
+      "post": {
+        "tags": ["Órdenes"],
+        "summary": "Crear nueva orden (Privado)",
+        "description": "El total se calcula automáticamente. Valida stock disponible y lo descuenta en transacción atómica.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": ["items"],
+              "properties": {
+                "shipping_address": { "type": "string", "example": "Calle 123 #45-67, Bogotá" },
+                "items": {
+                  "type": "array",
+                  "example": [
+                    { "product_id": 4, "quantity": 2, "price": 5.00 }
+                  ],
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "product_id": { "type": "integer" },
+                      "quantity": { "type": "integer" },
+                      "price": { "type": "number" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": { "description": "Orden creada exitosamente, devuelve orderId y total calculado" },
+          "400": { "description": "Items inválidos o stock insuficiente" },
+          "401": { "description": "Token inválido" },
+          "500": { "description": "Error interno del servidor" }
+        }
       }
     }
   }
