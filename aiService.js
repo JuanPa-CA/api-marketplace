@@ -22,8 +22,6 @@ const DEFAULT_MODEL = "gemini-2.5-flash";
 const generateProductDescription = async (name, context = "Producto") => {
   try {
     const prompt = `Actúa como copywriter experto. Crea una descripción corta y atractiva para un ${context} llamado "${name}". Solo texto plano, sin negritas ni símbolos. Máximo 2-3 líneas.`;
-
-    // ✅ Sintaxis correcta para @google/genai v1.x
     const response = await genAI.models.generateContent({
       model: DEFAULT_MODEL,
       contents: prompt,
@@ -34,7 +32,6 @@ const generateProductDescription = async (name, context = "Producto") => {
 
   } catch (error) {
     console.error("Error en generateProductDescription:", error.message);
-    // Fallback si la IA falla, para no romper el flujo principal
     return "Calidad excepcional, diseño moderno y funcionalidad superior en cada detalle.";
   }
 };
@@ -51,7 +48,6 @@ const analyzeReviews = async (productName, reviewsArray) => {
       return "Aún no hay reseñas disponibles.";
     }
 
-    // Limpiar y normalizar el array: acepta strings directos u objetos con .comment
     const cleanReviews = reviewsArray
       .map((r) =>
         typeof r === "string" ? r : r.comment || r.comentario || String(r)
@@ -65,7 +61,7 @@ const analyzeReviews = async (productName, reviewsArray) => {
     const prompt = `Analiza estas reseñas del producto "${productName}":\n${cleanReviews
       .map((r, i) => `${i + 1}. ${r}`)
       .join("\n")}\n\nResume el sentimiento general en español en UNA frase corta y directa.`;
-      
+
     const response = await genAI.models.generateContent({
       model: DEFAULT_MODEL,
       contents: prompt,

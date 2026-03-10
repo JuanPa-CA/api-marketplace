@@ -18,7 +18,7 @@ const deleteFileIfExists = (relativeUrl) => {
         }
     } catch (err) {
         // No rompemos el flujo si falla la limpieza del archivo
-        console.error(`⚠️  No se pudo eliminar el archivo: ${relativeUrl}`, err.message);
+        console.error(`No se pudo eliminar el archivo: ${relativeUrl}`, err.message);
     }
 };
 
